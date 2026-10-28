@@ -22,11 +22,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1793136825,
-        "narHash": "sha256-2pkE69JpFRInaARSczZytcfPw83IL82E2KdhbWGwdMs=",
+        "lastModified": 1793195608,
+        "narHash": "sha256-lNZLwWf5tYNKjothaoFq/VZYvzaclmLafjgMdUlpJPQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f05535a0efcb2134c478d1e88434fadf486d42b5",
+        "rev": "58deea654ec5dd0644f31c840a07c29fa0592528",
         "type": "github"
       },
       "original": {
@@ -36,10 +36,31 @@
         "type": "github"
       }
     },
+    "project": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793230716,
+        "narHash": "sha256-ZMAfg02qR75XxMYVBlPwdwsJLOqocxndUb38wdpUaj8=",
+        "owner": "sstix-tools",
+        "repo": "project",
+        "rev": "6656d44ec750a7d9e276d0e99f8ba1e943ee203b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sstix-tools",
+        "repo": "project",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "example-tool": "example-tool",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "project": "project"
       }
     }
   },
