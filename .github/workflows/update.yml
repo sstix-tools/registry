@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TOOLS_ORG: my-tools
+      TOOLS_ORG: sstix-tools
 
     steps:
       - name: Check out registry repository

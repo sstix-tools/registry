@@ -50,7 +50,7 @@ def github_request(path):
     headers = {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "my-tools-registry-updater",
+        "User-Agent": "sstix-tools-registry-updater",
     }
 
     if TOKEN:
@@ -154,7 +154,7 @@ def download(url, destination):
 
     headers = {
         "Accept": "application/octet-stream",
-        "User-Agent": "my-tools-registry-updater",
+        "User-Agent": "sstix-tools-registry-updater",
     }
 
     if TOKEN:

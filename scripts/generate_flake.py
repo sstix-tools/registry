@@ -11,7 +11,7 @@ packages = json.loads(packages_file.read_text())
 
 lines = [
     "{",
-    "  description = \"my-tools utility registry\";",
+    "  description = \"sstix-tools utility registry\";",
     "",
     "  inputs.nixpkgs.url = \"github:NixOS/nixpkgs/nixpkgs-unstable\";",
     "",
@@ -59,7 +59,7 @@ for item in packages:
             "",
             "          meta = {",
             "            platforms = pkgs.lib.platforms.unix;",
-            f"            description = \"{name} from my-tools\";",
+            f"            description = \"{name} from sstix-tools\";",
             "          };",
             "        };",
             "",

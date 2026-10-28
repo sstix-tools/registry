@@ -52,10 +52,10 @@ jobs:
           <html>
           <head>
             <meta charset="utf-8">
-            <title>my-tools package registry</title>
+            <title>sstix-tools package registry</title>
           </head>
           <body>
-            <h1>my-tools package registry</h1>
+            <h1>sstix-tools package registry</h1>
             <ul>
               <li><a href="apt/">APT repository</a></li>
               <li><a href="rpm/">RPM repository</a></li>
