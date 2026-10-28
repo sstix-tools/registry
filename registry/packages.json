@@ -1,25 +1,105 @@
 [
   {
-    "repository": "example-tool",
-    "release_id": 261172152,
-    "tag": "v1.0.3",
-    "release_url": "https://api.github.com/repos/sstix-tools/example-tool/releases/261172152",
-    "name": "example-tool",
-    "version": "1.0.3",
     "manifest": {
-      "name": "example-tool",
-      "version": "1.0.3",
-      "source_archive": "example-tool-1.0.3.tar.gz",
-      "source_hash": "sha256-SJw0QdWAbc8cwgypGCHPMdFFd3aYu4A3j0LaSb6cUD4=",
       "apt_package": "example-tool_1.0.3_all.deb",
-      "rpm_package": "example-tool-1.0.3-1.noarch.rpm",
+      "name": "example-tool",
       "nix_systems": [
         "aarch64-darwin",
         "x86_64-darwin"
-      ]
+      ],
+      "rpm_package": "example-tool-1.0.3-1.noarch.rpm",
+      "source_archive": "example-tool-1.0.3.tar.gz",
+      "source_hash": "sha256-SJw0QdWAbc8cwgypGCHPMdFFd3aYu4A3j0LaSb6cUD4=",
+      "version": "1.0.3"
     },
+    "name": "example-tool",
+    "release_id": 426963890,
+    "release_url": "https://github.com/sstix-tools/example-tool/releases/tag/v1.0.3",
+    "repository": "example-tool",
     "source_archive": "example-tool-1.0.3.tar.gz",
     "source_hash": "sha256-SJw0QdWAbc8cwgypGCHPMdFFd3aYu4A3j0LaSb6cUD4=",
-    "source_url": "https://github.com/sstix-tools/example-tool/releases/download/v1.0.3/example-tool-1.0.3.tar.gz"
+    "source_url": "https://github.com/sstix-tools/example-tool/releases/download/v1.0.3/example-tool-1.0.3.tar.gz",
+    "tag": "v1.0.3",
+    "version": "1.0.3"
+  },
+  {
+    "manifest": {
+      "apt_packages": [
+        "example-tool_1.0.4_all.deb"
+      ],
+      "completions": [
+        "_example-tool"
+      ],
+      "dependencies": [
+        "jq"
+      ],
+      "description": "Small shell utility storing state under XDG data directories",
+      "executables": [
+        "example-tool"
+      ],
+      "name": "example-tool",
+      "nix_systems": [
+        "aarch64-darwin",
+        "x86_64-darwin",
+        "x86_64-linux",
+        "aarch64-linux"
+      ],
+      "rpm_packages": [
+        "example-tool-1.0.4-1.noarch.rpm"
+      ],
+      "source_archive": "example-tool-1.0.4.tar.gz",
+      "source_hash": "sha256-cEG58UuheEWxmYe+BCAMtYrknWkar6pfcb31L2UN924=",
+      "type": "bash-utility",
+      "version": "1.0.4"
+    },
+    "name": "example-tool",
+    "release_id": 427030285,
+    "release_url": "https://github.com/sstix-tools/example-tool/releases/tag/v1.0.4",
+    "repository": "example-tool",
+    "source_archive": "example-tool-1.0.4.tar.gz",
+    "source_hash": "sha256-cEG58UuheEWxmYe+BCAMtYrknWkar6pfcb31L2UN924=",
+    "source_url": "https://github.com/sstix-tools/example-tool/releases/download/v1.0.4/example-tool-1.0.4.tar.gz",
+    "tag": "v1.0.4",
+    "version": "1.0.4"
+  },
+  {
+    "manifest": {
+      "apt_packages": [
+        "example-tool_1.0.5_all.deb"
+      ],
+      "completions": [
+        "_example-tool"
+      ],
+      "dependencies": [
+        "jq"
+      ],
+      "description": "Small shell utility storing state under XDG data directories",
+      "executables": [
+        "example-tool"
+      ],
+      "name": "example-tool",
+      "nix_systems": [
+        "aarch64-darwin",
+        "x86_64-darwin",
+        "x86_64-linux",
+        "aarch64-linux"
+      ],
+      "rpm_packages": [
+        "example-tool-1.0.5-1.noarch.rpm"
+      ],
+      "source_archive": "example-tool-1.0.5.tar.gz",
+      "source_hash": "sha256-HCiceCAFG7FnNUWuojIdflD559DGIIo1u2enErAC91g=",
+      "type": "bash-utility",
+      "version": "1.0.5"
+    },
+    "name": "example-tool",
+    "release_id": 427055529,
+    "release_url": "https://github.com/sstix-tools/example-tool/releases/tag/v1.0.5",
+    "repository": "example-tool",
+    "source_archive": "example-tool-1.0.5.tar.gz",
+    "source_hash": "sha256-HCiceCAFG7FnNUWuojIdflD559DGIIo1u2enErAC91g=",
+    "source_url": "https://github.com/sstix-tools/example-tool/releases/download/v1.0.5/example-tool-1.0.5.tar.gz",
+    "tag": "v1.0.5",
+    "version": "1.0.5"
   }
 ]

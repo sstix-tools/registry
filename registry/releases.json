@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "name": "example-tool",
+    "release_id": 426963890,
+    "repository": "example-tool",
+    "tag": "v1.0.3",
+    "version": "1.0.3"
+  },
+  {
+    "name": "example-tool",
+    "release_id": 427030285,
+    "repository": "example-tool",
+    "tag": "v1.0.4",
+    "version": "1.0.4"
+  },
+  {
+    "name": "example-tool",
+    "release_id": 427055529,
+    "repository": "example-tool",
+    "tag": "v1.0.5",
+    "version": "1.0.5"
+  }
+]
