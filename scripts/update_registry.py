@@ -360,6 +360,7 @@ def export_public_keys(key_id):
     )
     # Copy for RPM key convention
     shutil.copyfile(asc_path, RPM_DIR / "RPM-GPG-KEY-sstix-tools")
+    shutil.copyfile(asc_path, RPM_DIR / "sstix-tools.asc")
 
     print(f"Exported public GPG keys to {gpg_bin_path} and {asc_path}")
 
@@ -441,15 +442,7 @@ def generate_apt_metadata(deb_files, signing_key_id=None):
     distributions_file = conf_directory / "distributions"
     conf_directory.mkdir(parents=True, exist_ok=True)
 
-    dist_content = APT_CONF_SOURCE.read_text(encoding="utf-8") if APT_CONF_SOURCE.exists() else (
-        "Origin: sstix-tools\n"
-        "Label: sstix-tools\n"
-        "Suite: stable\n"
-        "Codename: stable\n"
-        "Architectures: amd64 arm64 all\n"
-        "Components: main\n"
-        "Description: sstix-tools Debian repository\n"
-    )
+    dist_content = APT_CONF_SOURCE.read_text(encoding="utf-8")
 
     if signing_key_id:
         dist_content = dist_content.strip() + f"\nSignWith: {signing_key_id}\n"
@@ -466,6 +459,7 @@ def generate_apt_metadata(deb_files, signing_key_id=None):
                 str(APT_DIR),
                 "--export=silent-never",
                 "--ignore=surprisingbinary",
+                "--ignore=alreadyincluded",
                 "includedeb",
                 "stable",
                 str(deb_file),
@@ -528,6 +522,115 @@ def generate_rpm_metadata(signing_key_id=None):
         )
 
 
+def generate_index_html(imported_packages=None):
+    """
+    Generate site/index.html with current package list, repository links, and instructions.
+    """
+    imported_packages = imported_packages or []
+    pkg_rows = ""
+    if imported_packages:
+        for pkg in imported_packages:
+            name = pkg.get("name", "")
+            version = pkg.get("version", "")
+            manifest = pkg.get("manifest", {})
+            desc = manifest.get("description", "")
+            repo = pkg.get("repository", name)
+            pkg_rows += f"""
+            <tr>
+              <td><strong><a href="https://github.com/{ORG}/{repo}">{name}</a></strong></td>
+              <td><code>{version}</code></td>
+              <td>{desc}</td>
+            </tr>"""
+    else:
+        pkg_rows = '<tr><td colspan="3"><em>No packages indexed yet.</em></td></tr>'
+
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{ORG} Package Registry</title>
+  <style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #24292f; }}
+    h1 {{ border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }}
+    h2 {{ margin-top: 24px; }}
+    h3 {{ margin-top: 18px; }}
+    pre {{ background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; font-size: 85%; }}
+    code {{ font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; background: #f6f8fa; padding: 0.2em 0.4em; border-radius: 3px; font-size: 85%; }}
+    pre code {{ padding: 0; background: transparent; }}
+    a {{ color: #0969da; text-decoration: none; }}
+    a:hover {{ text-decoration: underline; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 16px; }}
+    th, td {{ text-align: left; padding: 8px 12px; border-bottom: 1px solid #d0d7de; }}
+    th {{ background-color: #f6f8fa; }}
+  </style>
+</head>
+<body>
+  <h1>{ORG} Package Registry</h1>
+  <p>Central repository and distribution hub for <code>{ORG}</code> command-line utilities and Zsh extensions.</p>
+
+  <h2>Available Packages</h2>
+  <table>
+    <thead>
+      <tr><th>Package</th><th>Version</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      {pkg_rows}
+    </tbody>
+  </table>
+
+  <h2>Repositories & Key Links</h2>
+  <ul>
+    <li><a href="apt/">APT Repository (Debian / Ubuntu)</a></li>
+    <li><a href="rpm/">RPM Repository (Fedora / RHEL / CentOS)</a></li>
+    <li><a href="flake.nix">Nix Flake Definition</a></li>
+    <li><a href="sstix-tools.gpg">GPG Public Key (Binary)</a> | <a href="sstix-tools.asc">GPG Public Key (ASCII Armored)</a></li>
+  </ul>
+
+  <h2>Installation Guide</h2>
+
+  <h3>1. Debian / Ubuntu (APT)</h3>
+  <pre><code># Import GPG key and add repository
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://{ORG}.github.io/registry/sstix-tools.gpg | sudo tee /etc/apt/keyrings/sstix-tools.gpg > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/sstix-tools.gpg] https://{ORG}.github.io/registry/apt stable main" | sudo tee /etc/apt/sources.list.d/sstix-tools.list
+sudo apt update
+sudo apt install &lt;package-name&gt;</code></pre>
+
+  <h3>2. Fedora / RHEL (RPM)</h3>
+  <pre><code>sudo tee /etc/yum.repos.d/sstix-tools.repo &lt;&lt; 'EOF'
+[sstix-tools]
+name=sstix-tools Repository
+baseurl=https://{ORG}.github.io/registry/rpm
+enabled=1
+gpgcheck=1
+gpgkey=https://{ORG}.github.io/registry/sstix-tools.asc
+EOF
+sudo dnf install &lt;package-name&gt;</code></pre>
+
+  <h3>3. Nix Flakes</h3>
+  <pre><code># Run ephemeral utility
+nix run github:{ORG}/registry#&lt;package-name&gt;
+
+# Install into user profile
+nix profile install github:{ORG}/registry#&lt;package-name&gt;</code></pre>
+
+  <h2>Zsh Functions & Completions</h2>
+  <p>Ensure your <code>~/.zshrc</code> has user autoload directories configured in <code>fpath</code>:</p>
+  <pre><code>fpath=(
+    "$HOME/.local/share/zsh/functions"
+    "$HOME/.local/share/zsh/site-functions"
+    $fpath
+)
+autoload -Uz compinit && compinit</code></pre>
+</body>
+</html>
+"""
+    SITE.mkdir(parents=True, exist_ok=True)
+    (SITE / "index.html").write_text(html, encoding="utf-8")
+    print(f"Wrote {SITE / 'index.html'}")
+
+
 # ---------------------------------------------------------------------------
 # Main registry update
 # ---------------------------------------------------------------------------
@@ -548,6 +651,10 @@ def main():
             write_json(PACKAGES_FILE, [])
         if not STATE_FILE.exists():
             write_json(STATE_FILE, [])
+        APT_DIR.mkdir(parents=True, exist_ok=True)
+        RPM_DIR.mkdir(parents=True, exist_ok=True)
+        NIX_DIR.mkdir(parents=True, exist_ok=True)
+        generate_index_html([])
         return
 
     # Rebuild the generated site from all published releases.
@@ -703,6 +810,9 @@ def main():
             ],
             check=True,
         )
+
+    # Generate site index.html
+    generate_index_html(imported)
 
     print("Registry update completed successfully")
 
