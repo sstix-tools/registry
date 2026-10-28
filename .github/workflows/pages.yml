@@ -47,7 +47,7 @@ jobs:
             mkdir -p site/nix
           fi
 
-          cat > site/index.html <<'EOF'
+          cat > site/index.html <<'INDEX_HTML'
           <!doctype html>
           <html lang="en">
           <head>
@@ -81,41 +81,41 @@ jobs:
 
             <h3>1. Debian / Ubuntu (APT)</h3>
             <pre><code># Import GPG key and add repository
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://sstix-tools.github.io/registry/sstix-tools.gpg | sudo tee /etc/apt/keyrings/sstix-tools.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/sstix-tools.gpg] https://sstix-tools.github.io/registry/apt stable main" | sudo tee /etc/apt/sources.list.d/sstix-tools.list
-sudo apt update
-sudo apt install &lt;package-name&gt;</code></pre>
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://sstix-tools.github.io/registry/sstix-tools.gpg | sudo tee /etc/apt/keyrings/sstix-tools.gpg > /dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/sstix-tools.gpg] https://sstix-tools.github.io/registry/apt stable main" | sudo tee /etc/apt/sources.list.d/sstix-tools.list
+          sudo apt update
+          sudo apt install &lt;package-name&gt;</code></pre>
 
             <h3>2. Fedora / RHEL (RPM)</h3>
             <pre><code>sudo tee /etc/yum.repos.d/sstix-tools.repo &lt;&lt; 'EOF'
-[sstix-tools]
-name=sstix-tools Repository
-baseurl=https://sstix-tools.github.io/registry/rpm
-enabled=1
-gpgcheck=1
-gpgkey=https://sstix-tools.github.io/registry/sstix-tools.asc
-EOF
-sudo dnf install &lt;package-name&gt;</code></pre>
+          [sstix-tools]
+          name=sstix-tools Repository
+          baseurl=https://sstix-tools.github.io/registry/rpm
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://sstix-tools.github.io/registry/sstix-tools.asc
+          EOF
+          sudo dnf install &lt;package-name&gt;</code></pre>
 
             <h3>3. Nix</h3>
             <pre><code># Run ephemeral utility
-nix run github:sstix-tools/registry#&lt;package-name&gt;
+          nix run github:sstix-tools/registry#&lt;package-name&gt;
 
-# Install into profile
-nix profile install github:sstix-tools/registry#&lt;package-name&gt;</code></pre>
+          # Install into profile
+          nix profile install github:sstix-tools/registry#&lt;package-name&gt;</code></pre>
 
             <h2>Zsh Functions & Completions</h2>
             <p>Ensure your <code>~/.zshrc</code> has user autoload directories configured in <code>fpath</code>:</p>
             <pre><code>fpath=(
-    "$HOME/.local/share/zsh/functions"
-    "$HOME/.local/share/zsh/site-functions"
-    $fpath
-)
-autoload -Uz compinit && compinit</code></pre>
+              "$HOME/.local/share/zsh/functions"
+              "$HOME/.local/share/zsh/site-functions"
+              $fpath
+          )
+          autoload -Uz compinit && compinit</code></pre>
           </body>
           </html>
-          EOF
+          INDEX_HTML
 
           cp site/nix/flake.nix site/flake.nix 2>/dev/null || true
 
