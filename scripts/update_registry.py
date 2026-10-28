@@ -256,6 +256,7 @@ def write_json(path, value):
 def setup_gpg():
     """
     Check if GPG is available and import private key if GPG_PRIVATE_KEY is set.
+    If no key exists, automatically generates a repository signing key.
     Returns primary signing key ID or None.
     """
 
@@ -280,20 +281,48 @@ def setup_gpg():
         text=True,
     )
 
-    if key_proc.returncode != 0 or not key_proc.stdout:
-        print("No secret GPG keys found in keyring; repository will be unsigned")
-        return None
-
-    # Parse key ID / fingerprint
     key_id = None
-    for line in key_proc.stdout.splitlines():
-        parts = line.split(":")
-        if parts[0] == "sec" and len(parts) > 4 and parts[4]:
-            key_id = parts[4]
-            break
-        elif parts[0] == "fpr" and len(parts) > 9 and parts[9]:
-            key_id = parts[9]
-            break
+    if key_proc.returncode == 0 and key_proc.stdout:
+        for line in key_proc.stdout.splitlines():
+            parts = line.split(":")
+            if parts[0] == "sec" and len(parts) > 4 and parts[4]:
+                key_id = parts[4]
+                break
+            elif parts[0] == "fpr" and len(parts) > 9 and parts[9]:
+                key_id = parts[9]
+                break
+
+    if not key_id:
+        print("No secret GPG keys found; generating standard repository key...")
+        gen_proc = subprocess.run(
+            [
+                "gpg",
+                "--batch",
+                "--passphrase",
+                "",
+                "--quick-generate-key",
+                f"{ORG} Package Signing Key <packages@{ORG}.local>",
+                "default",
+                "default",
+                "never",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if gen_proc.returncode == 0:
+            key_proc = subprocess.run(
+                ["gpg", "--batch", "--with-colons", "--list-secret-keys"],
+                capture_output=True,
+                text=True,
+            )
+            for line in key_proc.stdout.splitlines():
+                parts = line.split(":")
+                if parts[0] == "sec" and len(parts) > 4 and parts[4]:
+                    key_id = parts[4]
+                    break
+                elif parts[0] == "fpr" and len(parts) > 9 and parts[9]:
+                    key_id = parts[9]
+                    break
 
     if key_id:
         print(f"Found GPG signing key: {key_id}")

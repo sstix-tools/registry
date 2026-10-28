@@ -107,18 +107,23 @@ sudo zypper install <package-name>
 
 ### C. Nix (Linux / macOS / NixOS)
 
+Tools that provide a `flake.nix` can be run or installed directly from their repository or via the registry aggregator:
+
 #### Run Directly (Ephemeral)
 ```bash
-nix run github:sstix-tools/registry#<package-name>
-```
+# Direct from tool repository
+nix run github:sstix-tools/<package-name>
 
-#### Temporary Shell
-```bash
-nix shell github:sstix-tools/registry#<package-name>
+# Or via registry aggregator
+nix run github:sstix-tools/registry#<package-name>
 ```
 
 #### Install into Profile
 ```bash
+# Direct from tool repository
+nix profile install github:sstix-tools/<package-name>
+
+# Or via registry aggregator
 nix profile install github:sstix-tools/registry#<package-name>
 ```
 

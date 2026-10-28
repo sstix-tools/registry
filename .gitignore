@@ -1,0 +1,16 @@
+# Distribution and build artifacts
+site/
+dist/
+build/
+*.tar.gz
+*.deb
+*.rpm
+
+# Generated Nix files
+flake.nix
+flake.lock
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
