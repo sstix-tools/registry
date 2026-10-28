@@ -459,7 +459,6 @@ def generate_apt_metadata(deb_files, signing_key_id=None):
                 str(APT_DIR),
                 "--export=silent-never",
                 "--ignore=surprisingbinary",
-                "--ignore=alreadyincluded",
                 "includedeb",
                 "stable",
                 str(deb_file),
