@@ -490,6 +490,53 @@ def generate_apt_metadata(deb_files, signing_key_id=None):
     )
 
 
+def sign_rpm_packages(signing_key_id):
+    """
+    Sign all .rpm packages in RPM_DIR with the GPG signing key.
+    """
+    if not signing_key_id:
+        return
+
+    rpm_tool = shutil.which("rpmsign") or shutil.which("rpm")
+    if not rpm_tool:
+        print("Warning: rpmsign / rpm not found; skipping RPM package signing")
+        return
+
+    rpm_files = list(RPM_DIR.glob("*.rpm"))
+    if not rpm_files:
+        return
+
+    print(f"Signing {len(rpm_files)} RPM packages with key {signing_key_id}")
+
+    # Configure ~/.rpmmacros for GPG signing
+    rpmmacros_path = pathlib.Path.home() / ".rpmmacros"
+    rpmmacros_content = (
+        "%_signature gpg\n"
+        f"%_gpg_name {signing_key_id}\n"
+        "%_gpg_digest_algo sha256\n"
+        "%__gpg_sign_cmd %{__gpg} gpg --no-verbose --no-armor --batch --pinentry-mode loopback --yes -u \"%{_gpg_name}\" -sbo %{__signature_filename} %{__plaintext_filename}\n"
+    )
+    try:
+        rpmmacros_path.write_text(rpmmacros_content, encoding="utf-8")
+    except Exception as exc:
+        print(f"Warning: Could not write ~/.rpmmacros: {exc}")
+
+    for rpm_file in rpm_files:
+        print(f"Signing RPM package: {rpm_file.name}")
+        try:
+            cmd = [
+                rpm_tool,
+                "--define", "_signature gpg",
+                "--define", f"_gpg_name {signing_key_id}",
+                "--define", "_gpg_digest_algo sha256",
+                "--addsign",
+                str(rpm_file),
+            ]
+            subprocess.run(cmd, check=True)
+        except Exception as exc:
+            print(f"Warning: Failed to sign {rpm_file.name}: {exc}")
+
+
 def generate_rpm_metadata(signing_key_id=None):
     """
     Build RPM repository metadata with createrepo_c.
@@ -498,6 +545,10 @@ def generate_rpm_metadata(signing_key_id=None):
     if not shutil.which("createrepo_c"):
         print("Warning: createrepo_c not found; skipping RPM metadata generation")
         return
+
+    # Sign RPM packages before creating repository metadata
+    if signing_key_id:
+        sign_rpm_packages(signing_key_id)
 
     print(f"Generating RPM metadata in {RPM_DIR}")
 
