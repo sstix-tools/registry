@@ -49,18 +49,70 @@ jobs:
 
           cat > site/index.html <<'EOF'
           <!doctype html>
-          <html>
+          <html lang="en">
           <head>
             <meta charset="utf-8">
-            <title>sstix-tools package registry</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>sstix-tools Package Registry</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #24292f; }
+              h1 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
+              h2 { margin-top: 24px; }
+              pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; font-size: 85%; }
+              code { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; background: #f6f8fa; padding: 0.2em 0.4em; border-radius: 3px; font-size: 85%; }
+              pre code { padding: 0; background: transparent; }
+              a { color: #0969da; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+            </style>
           </head>
           <body>
-            <h1>sstix-tools package registry</h1>
+            <h1>sstix-tools Package Registry</h1>
+            <p>Central repository and distribution hub for <code>sstix-tools</code> command-line utilities and Zsh extensions.</p>
+
+            <h2>Repositories & Key Links</h2>
             <ul>
-              <li><a href="apt/">APT repository</a></li>
-              <li><a href="rpm/">RPM repository</a></li>
-              <li><a href="nix/flake.nix">Nix flake</a></li>
+              <li><a href="apt/">APT Repository (Debian / Ubuntu)</a></li>
+              <li><a href="rpm/">RPM Repository (Fedora / RHEL / CentOS)</a></li>
+              <li><a href="nix/flake.nix">Nix Flake Definition</a></li>
+              <li><a href="sstix-tools.gpg">GPG Public Key (Binary)</a> | <a href="sstix-tools.asc">GPG Public Key (ASCII Armored)</a></li>
             </ul>
+
+            <h2>Quick Installation</h2>
+
+            <h3>1. Debian / Ubuntu (APT)</h3>
+            <pre><code># Import GPG key and add repository
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://sstix-tools.github.io/registry/sstix-tools.gpg | sudo tee /etc/apt/keyrings/sstix-tools.gpg > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/sstix-tools.gpg] https://sstix-tools.github.io/registry/apt stable main" | sudo tee /etc/apt/sources.list.d/sstix-tools.list
+sudo apt update
+sudo apt install &lt;package-name&gt;</code></pre>
+
+            <h3>2. Fedora / RHEL (RPM)</h3>
+            <pre><code>sudo tee /etc/yum.repos.d/sstix-tools.repo &lt;&lt; 'EOF'
+[sstix-tools]
+name=sstix-tools Repository
+baseurl=https://sstix-tools.github.io/registry/rpm
+enabled=1
+gpgcheck=1
+gpgkey=https://sstix-tools.github.io/registry/sstix-tools.asc
+EOF
+sudo dnf install &lt;package-name&gt;</code></pre>
+
+            <h3>3. Nix</h3>
+            <pre><code># Run ephemeral utility
+nix run github:sstix-tools/registry#&lt;package-name&gt;
+
+# Install into profile
+nix profile install github:sstix-tools/registry#&lt;package-name&gt;</code></pre>
+
+            <h2>Zsh Functions & Completions</h2>
+            <p>Ensure your <code>~/.zshrc</code> has user autoload directories configured in <code>fpath</code>:</p>
+            <pre><code>fpath=(
+    "$HOME/.local/share/zsh/functions"
+    "$HOME/.local/share/zsh/site-functions"
+    $fpath
+)
+autoload -Uz compinit && compinit</code></pre>
           </body>
           </html>
           EOF

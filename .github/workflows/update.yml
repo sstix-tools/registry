@@ -2,9 +2,15 @@ name: Update package registries
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 * * * *"
 
   workflow_dispatch:
+
+  repository_dispatch:
+    types:
+      - release
+      - tool_release
+      - registry_update
 
 permissions:
   contents: write
@@ -35,11 +41,13 @@ jobs:
             createrepo-c \
             reprepro \
             rpm \
-            jq
+            jq \
+            gnupg
 
       - name: Run registry updater
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         run: |
           python3 scripts/update_registry.py
 

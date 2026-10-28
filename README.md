@@ -1,108 +1,128 @@
 # sstix-tools Package Registry
 
-Central package registry and distribution hub for `sstix-tools` command-line utilities.
+Central package registry and distribution hub for `sstix-tools` command-line utilities, script packages, and Zsh function extensions.
 
-This registry automatically indexes and hosts releases for Debian/Ubuntu (APT), Fedora/RHEL/CentOS (RPM), and Nix across supported platforms (`x86_64-linux`, `aarch64-linux`, `x86_64-darwin`, `aarch64-darwin`).
+This registry automatically indexes and hosts releases for:
+- **Debian / Ubuntu** (APT repository)
+- **Fedora / RHEL / CentOS / openSUSE** (RPM repository)
+- **Nix / NixOS / Home Manager** (Nix Flake)
 
-- **Registry Web / Repository Base**: [https://sstix-tools.github.io/registry/](https://sstix-tools.github.io/registry/)
+Supported architectures: `x86_64-linux`, `aarch64-linux`, `x86_64-darwin`, `aarch64-darwin` (plus `all`/`noarch` for scripts and Zsh functions).
+
+- **Registry Web Base**: [https://sstix-tools.github.io/registry/](https://sstix-tools.github.io/registry/)
 - **APT Repository**: `https://sstix-tools.github.io/registry/apt/`
 - **RPM Repository**: `https://sstix-tools.github.io/registry/rpm/`
 - **Nix Flake**: `github:sstix-tools/registry`
+- **GPG Key (Binary)**: `https://sstix-tools.github.io/registry/sstix-tools.gpg`
+- **GPG Key (ASCII Armored)**: `https://sstix-tools.github.io/registry/sstix-tools.asc`
 
 ---
 
-## Adding the Repositories & Installing Packages
+## 1. Zsh Setup (Completions & Autoloadable Functions)
 
-### 1. APT (Debian / Ubuntu / Linux Mint / Pop!_OS)
+All packages in `sstix-tools` install completions and functions to standard locations. Ensure your `~/.zshrc` is configured with user paths in `fpath`:
 
-1. Add the repository to your APT sources:
+```zsh
+# User-installed executables
+export PATH="$HOME/.local/bin:$PATH"
 
-```bash
-echo "deb [trusted=yes] https://sstix-tools.github.io/registry/apt stable main" | sudo tee /etc/apt/sources.list.d/sstix-tools.list
+# User-installed zsh functions and completions
+fpath=(
+    "$HOME/.local/share/zsh/functions"
+    "$HOME/.local/share/zsh/site-functions"
+    $fpath
+)
+
+autoload -Uz compinit
+compinit
 ```
 
-2. Update package lists and install any tool:
+### Autoloading Zsh Functions
+When you install a Zsh function extension package (e.g. `my-func`), you can autoload it in your shell or `~/.zshrc`:
 
+```zsh
+# Autoload a specific function
+autoload -Uz my-func
+
+# Or autoload all user-installed functions in fpath
+for f in "$HOME/.local/share/zsh/functions"/*(N:t) /usr/share/zsh/functions/*(N:t); do
+    autoload -Uz "$f"
+done
+```
+
+---
+
+## 2. Package Installation
+
+### A. APT (Debian / Ubuntu / Pop!_OS / Linux Mint)
+
+#### Secure Setup (GPG Verified):
 ```bash
+# 1. Download repository GPG signing key
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://sstix-tools.github.io/registry/sstix-tools.gpg | sudo tee /etc/apt/keyrings/sstix-tools.gpg > /dev/null
+
+# 2. Add APT repository source list
+echo "deb [signed-by=/etc/apt/keyrings/sstix-tools.gpg] https://sstix-tools.github.io/registry/apt stable main" | sudo tee /etc/apt/sources.list.d/sstix-tools.list
+
+# 3. Update & install
 sudo apt update
 sudo apt install <package-name>
 ```
 
-**Example:**
+*(Unsigned fallback)*:
 ```bash
+echo "deb [trusted=yes] https://sstix-tools.github.io/registry/apt stable main" | sudo tee /etc/apt/sources.list.d/sstix-tools.list
 sudo apt update
-sudo apt install example-tool
+sudo apt install <package-name>
 ```
 
 ---
 
-### 2. RPM (Fedora / RHEL / CentOS / Rocky Linux / AlmaLinux)
+### B. RPM (Fedora / RHEL / CentOS / Rocky Linux / AlmaLinux)
 
-1. Create a repository file at `/etc/yum.repos.d/sstix-tools.repo`:
-
+#### Secure Setup (GPG Verified):
 ```bash
 sudo tee /etc/yum.repos.d/sstix-tools.repo << 'EOF'
 [sstix-tools]
 name=sstix-tools Repository
 baseurl=https://sstix-tools.github.io/registry/rpm
 enabled=1
-gpgcheck=0
+gpgcheck=1
+gpgkey=https://sstix-tools.github.io/registry/sstix-tools.asc
 EOF
-```
 
-2. Install any package using `dnf` or `yum`:
-
-```bash
 sudo dnf install <package-name>
 ```
 
-**Example:**
-```bash
-sudo dnf install example-tool
-```
-
-*(For openSUSE / Zypper)*:
+*(openSUSE / Zypper)*:
 ```bash
 sudo zypper addrepo https://sstix-tools.github.io/registry/rpm sstix-tools
+sudo rpm --import https://sstix-tools.github.io/registry/sstix-tools.asc
 sudo zypper refresh
-sudo zypper install example-tool
+sudo zypper install <package-name>
 ```
 
 ---
 
-### 3. Nix (NixOS / Linux / macOS)
-
-The registry exposes a Nix Flake containing all published utilities.
+### C. Nix (Linux / macOS / NixOS)
 
 #### Run Directly (Ephemeral)
-Run any utility without permanently installing it:
-
 ```bash
 nix run github:sstix-tools/registry#<package-name>
 ```
 
-**Example:**
-```bash
-nix run github:sstix-tools/registry#example-tool
-```
-
-#### Run in a Temporary Shell
-Drop into a shell environment with the tool available in your `$PATH`:
-
+#### Temporary Shell
 ```bash
 nix shell github:sstix-tools/registry#<package-name>
 ```
 
-#### Install into User Profile
-Install the utility globally into your active Nix profile:
-
+#### Install into Profile
 ```bash
 nix profile install github:sstix-tools/registry#<package-name>
 ```
 
-#### Use in `flake.nix` or NixOS / Home Manager Configuration
-Add the registry as an input in your `flake.nix`:
-
+#### Flake Configuration (`flake.nix` / Home Manager / NixOS)
 ```nix
 {
   inputs = {
@@ -115,21 +135,65 @@ Add the registry as an input in your `flake.nix`:
       system = "x86_64-linux"; # or "aarch64-darwin", "x86_64-darwin", "aarch64-linux"
       pkgs = nixpkgs.legacyPackages.${system};
     in {
-      # In NixOS configuration / Home Manager:
-      # environment.systemPackages = [ sstix-tools.packages.${system}.example-tool ];
-      # or
-      # home.packages = [ sstix-tools.packages.${system}.example-tool ];
+      # In Home Manager:
+      # home.packages = [ sstix-tools.packages.${system}.<package-name> ];
+
+      # In NixOS:
+      # environment.systemPackages = [ sstix-tools.packages.${system}.<package-name> ];
     };
 }
 ```
 
 ---
 
-## How It Works
+## 3. Creating & Publishing New Tools
 
-1. **Ingestion (`scripts/update_registry.py`)**: Runs periodically via GitHub Actions (`update.yml`), scanning all repositories in the `sstix-tools` organization for tagged releases containing a `manifest.json`.
-2. **Metadata Generation**:
-   - APT repository metadata generated via `reprepro`.
-   - RPM repository metadata generated via `createrepo_c`.
-   - Nix Flake generated via `scripts/generate_flake.py`.
-3. **Deployment (`pages.yml`)**: Deploys the APT repository, RPM repository, and Nix flake to GitHub Pages.
+Use one of the official template repositories in `sstix-tools`:
+
+| Template | Description |
+|---|---|
+| [`template-bash-utility`](https://github.com/sstix-tools/template-bash-utility) | POSIX / Bash script utilities with Zsh completions |
+| [`template-python-utility`](https://github.com/sstix-tools/template-python-utility) | Python CLI scripts with dependency wrapping & completions |
+| [`template-c-utility`](https://github.com/sstix-tools/template-c-utility) | Compiled C utilities with Makefile & multi-arch binary releases |
+| [`template-zsh-function`](https://github.com/sstix-tools/template-zsh-function) | Autoloadable Zsh functions with completions |
+
+### Publishing Workflow
+1. Create a repository under the `sstix-tools` organization using the appropriate template.
+2. Push your changes and tag a release (e.g. `git tag v1.0.0 && git push origin v1.0.0`).
+3. The repository's `release.yaml` workflow builds `.deb`, `.rpm`, source `.tar.gz`, and `manifest.json`.
+4. The workflow triggers a `repository_dispatch` to `sstix-tools/registry`, which immediately re-indexes packages and updates GitHub Pages.
+
+---
+
+## 4. Organization Setup & Secrets
+
+To enable instant event-driven registry updates and GPG package signing across the organization:
+
+1. **GitHub Pages**:
+   - Go to `registry` repository -> **Settings** -> **Pages** -> Source: **GitHub Actions**.
+
+2. **Registry Dispatch Token (Optional for instant dispatch)**:
+   - Create a GitHub Personal Access Token (PAT) with `repo` scope or Organization Fine-Grained Token with repository dispatch permissions on `sstix-tools/registry`.
+   - Add it as an organization or repository secret named `REGISTRY_DISPATCH_TOKEN` in tool repositories.
+   - *Note*: If omitted, release workflows fall back cleanly and the registry's scheduled hourly cron crawler will ingest the release.
+
+3. **GPG Repository Signing Key (Optional)**:
+   - Generate a GPG keypair for package signing:
+     ```bash
+     gpg --batch --gen-key <<EOF
+     Key-Type: RSA
+     Key-Length: 4096
+     Subkey-Type: RSA
+     Subkey-Length: 4096
+     Name-Real: sstix-tools Package Registry
+     Name-Email: tools@sstix.invalid
+     Expire-Date: 0
+     %no-protection
+     %commit
+     EOF
+     ```
+   - Export the private key:
+     ```bash
+     gpg --armor --export-secret-keys "sstix-tools Package Registry"
+     ```
+   - In `sstix-tools/registry` -> **Settings** -> **Secrets and variables** -> **Actions**, add a repository secret named `GPG_PRIVATE_KEY` containing the ASCII-armored private key.

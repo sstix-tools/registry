@@ -1,1 +1,25 @@
-[]
+[
+  {
+    "repository": "example-tool",
+    "release_id": 261172152,
+    "tag": "v1.0.3",
+    "release_url": "https://api.github.com/repos/sstix-tools/example-tool/releases/261172152",
+    "name": "example-tool",
+    "version": "1.0.3",
+    "manifest": {
+      "name": "example-tool",
+      "version": "1.0.3",
+      "source_archive": "example-tool-1.0.3.tar.gz",
+      "source_hash": "sha256-SJw0QdWAbc8cwgypGCHPMdFFd3aYu4A3j0LaSb6cUD4=",
+      "apt_package": "example-tool_1.0.3_all.deb",
+      "rpm_package": "example-tool-1.0.3-1.noarch.rpm",
+      "nix_systems": [
+        "aarch64-darwin",
+        "x86_64-darwin"
+      ]
+    },
+    "source_archive": "example-tool-1.0.3.tar.gz",
+    "source_hash": "sha256-SJw0QdWAbc8cwgypGCHPMdFFd3aYu4A3j0LaSb6cUD4=",
+    "source_url": "https://github.com/sstix-tools/example-tool/releases/download/v1.0.3/example-tool-1.0.3.tar.gz"
+  }
+]

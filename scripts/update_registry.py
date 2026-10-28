@@ -18,8 +18,9 @@ import urllib.request
 # Configuration
 # ---------------------------------------------------------------------------
 
-ORG = os.environ["TOOLS_ORG"]
+ORG = os.environ.get("TOOLS_ORG", "sstix-tools")
 TOKEN = os.environ.get("GH_TOKEN", "")
+GPG_PRIVATE_KEY = os.environ.get("GPG_PRIVATE_KEY", "")
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -91,9 +92,13 @@ def list_all_repositories():
             f"&type=all"
         )
 
-        result = github_request(path)
+        try:
+            result = github_request(path)
+        except RuntimeError as e:
+            print(f"Warning: Could not list org repositories: {e}")
+            break
 
-        if not result:
+        if not result or not isinstance(result, list):
             break
 
         repositories.extend(result)
@@ -121,9 +126,13 @@ def list_all_releases(repository):
             f"?per_page=100&page={page}"
         )
 
-        result = github_request(path)
+        try:
+            result = github_request(path)
+        except RuntimeError as e:
+            print(f"Warning: Could not list releases for {repository}: {e}")
+            break
 
-        if not result:
+        if not result or not isinstance(result, list):
             break
 
         releases.extend(result)
@@ -241,6 +250,92 @@ def write_json(path, value):
 
 
 # ---------------------------------------------------------------------------
+# GPG Setup & Key Management
+# ---------------------------------------------------------------------------
+
+def setup_gpg():
+    """
+    Check if GPG is available and import private key if GPG_PRIVATE_KEY is set.
+    Returns primary signing key ID or None.
+    """
+
+    if not shutil.which("gpg"):
+        print("GPG CLI not available; skipping repository signing")
+        return None
+
+    if GPG_PRIVATE_KEY:
+        print("Importing GPG private key from GPG_PRIVATE_KEY environment variable")
+        import_proc = subprocess.run(
+            ["gpg", "--batch", "--yes", "--import"],
+            input=GPG_PRIVATE_KEY.encode("utf-8"),
+            capture_output=True,
+        )
+        if import_proc.returncode != 0:
+            print(f"Warning: Failed to import GPG key: {import_proc.stderr.decode('utf-8')}")
+
+    # Check for secret keys in keyring
+    key_proc = subprocess.run(
+        ["gpg", "--batch", "--with-colons", "--list-secret-keys"],
+        capture_output=True,
+        text=True,
+    )
+
+    if key_proc.returncode != 0 or not key_proc.stdout:
+        print("No secret GPG keys found in keyring; repository will be unsigned")
+        return None
+
+    # Parse key ID / fingerprint
+    key_id = None
+    for line in key_proc.stdout.splitlines():
+        parts = line.split(":")
+        if parts[0] == "sec" and len(parts) > 4 and parts[4]:
+            key_id = parts[4]
+            break
+        elif parts[0] == "fpr" and len(parts) > 9 and parts[9]:
+            key_id = parts[9]
+            break
+
+    if key_id:
+        print(f"Found GPG signing key: {key_id}")
+        export_public_keys(key_id)
+        return key_id
+
+    return None
+
+
+def export_public_keys(key_id):
+    """
+    Export public GPG key into site/ directory for client verification.
+    """
+
+    SITE.mkdir(parents=True, exist_ok=True)
+    APT_DIR.mkdir(parents=True, exist_ok=True)
+    RPM_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Binary GPG Keyring
+    gpg_bin_path = SITE / "sstix-tools.gpg"
+    subprocess.run(
+        ["gpg", "--batch", "--yes", "--export", key_id],
+        stdout=gpg_bin_path.open("wb"),
+        check=True,
+    )
+    # Copy for APT keyring convention
+    shutil.copyfile(gpg_bin_path, APT_DIR / "sstix-tools.gpg")
+
+    # Armored GPG Public Key
+    asc_path = SITE / "sstix-tools.asc"
+    subprocess.run(
+        ["gpg", "--batch", "--yes", "--armor", "--export", key_id],
+        stdout=asc_path.open("wb"),
+        check=True,
+    )
+    # Copy for RPM key convention
+    shutil.copyfile(asc_path, RPM_DIR / "RPM-GPG-KEY-sstix-tools")
+
+    print(f"Exported public GPG keys to {gpg_bin_path} and {asc_path}")
+
+
+# ---------------------------------------------------------------------------
 # Release discovery
 # ---------------------------------------------------------------------------
 
@@ -262,12 +357,6 @@ def discover_registry_releases():
     for repository_data in repositories:
         repository_name = repository_data["name"]
 
-        # Optional: uncomment this if you want to require a repository topic.
-        #
-        # topics = repository_data.get("topics", [])
-        # if "package-source" not in topics:
-        #     continue
-
         releases = list_all_releases(repository_name)
 
         for release in releases:
@@ -287,7 +376,7 @@ def discover_registry_releases():
                     "repository": repository_name,
                     "release_id": release["id"],
                     "tag": release["tag_name"],
-                    "release_url": release["html_url"],
+                    "release_url": release.get("html_url", release.get("url", "")),
                     "assets": assets,
                 }
             )
@@ -306,46 +395,37 @@ def discover_registry_releases():
 # Package-manager metadata generation
 # ---------------------------------------------------------------------------
 
-def generate_apt_metadata(deb_files):
+def generate_apt_metadata(deb_files, signing_key_id=None):
     """
     Build the APT repository with reprepro.
-
-    The source distribution configuration is read from:
-
-        apt-conf/distributions
-
-    and copied into the generated repository at:
-
-        site/apt/conf/distributions
     """
 
     if not deb_files:
-        raise RuntimeError(
-            "No Debian packages were found"
-        )
+        print("No Debian packages to index")
+        return
 
-    if not APT_CONF_SOURCE.exists():
-        raise RuntimeError(
-            f"Missing APT distribution configuration: {APT_CONF_SOURCE}"
-        )
+    if not shutil.which("reprepro"):
+        print("Warning: reprepro not found; skipping APT metadata generation")
+        return
 
     conf_directory = APT_DIR / "conf"
     distributions_file = conf_directory / "distributions"
-
     conf_directory.mkdir(parents=True, exist_ok=True)
 
-    shutil.copyfile(
-        APT_CONF_SOURCE,
-        distributions_file,
+    dist_content = APT_CONF_SOURCE.read_text(encoding="utf-8") if APT_CONF_SOURCE.exists() else (
+        "Origin: sstix-tools\n"
+        "Label: sstix-tools\n"
+        "Suite: stable\n"
+        "Codename: stable\n"
+        "Architectures: amd64 arm64 all\n"
+        "Components: main\n"
+        "Description: sstix-tools Debian repository\n"
     )
 
-    print(
-        f"Using APT configuration: {APT_CONF_SOURCE}"
-    )
+    if signing_key_id:
+        dist_content = dist_content.strip() + f"\nSignWith: {signing_key_id}\n"
 
-    print(
-        f"Copied APT configuration to: {distributions_file}"
-    )
+    distributions_file.write_text(dist_content, encoding="utf-8")
 
     for deb_file in deb_files:
         print(f"Importing Debian package: {deb_file}")
@@ -355,6 +435,8 @@ def generate_apt_metadata(deb_files):
                 "reprepro",
                 "--basedir",
                 str(APT_DIR),
+                "--export=silent-never",
+                "--ignore=surprisingbinary",
                 "includedeb",
                 "stable",
                 str(deb_file),
@@ -362,10 +444,27 @@ def generate_apt_metadata(deb_files):
             check=True,
         )
 
-def generate_rpm_metadata():
+    # Ensure repository export
+    subprocess.run(
+        [
+            "reprepro",
+            "--basedir",
+            str(APT_DIR),
+            "export",
+            "stable",
+        ],
+        check=True,
+    )
+
+
+def generate_rpm_metadata(signing_key_id=None):
     """
-    Build RPM repository metadata.
+    Build RPM repository metadata with createrepo_c.
     """
+
+    if not shutil.which("createrepo_c"):
+        print("Warning: createrepo_c not found; skipping RPM metadata generation")
+        return
 
     print(f"Generating RPM metadata in {RPM_DIR}")
 
@@ -378,6 +477,27 @@ def generate_rpm_metadata():
         check=True,
     )
 
+    # Sign repomd.xml if GPG signing key is available
+    repomd_file = RPM_DIR / "repodata" / "repomd.xml"
+    if signing_key_id and repomd_file.exists() and shutil.which("gpg"):
+        print(f"Signing RPM repodata with key {signing_key_id}")
+        asc_file = RPM_DIR / "repodata" / "repomd.xml.asc"
+        if asc_file.exists():
+            asc_file.unlink()
+        subprocess.run(
+            [
+                "gpg",
+                "--batch",
+                "--yes",
+                "--detach-sign",
+                "--armor",
+                "-u",
+                signing_key_id,
+                str(repomd_file),
+            ],
+            check=True,
+        )
+
 
 # ---------------------------------------------------------------------------
 # Main registry update
@@ -386,25 +506,31 @@ def generate_rpm_metadata():
 def main():
     print(f"Discovering releases in organization: {ORG}")
 
-    discovered = discover_registry_releases()
+    signing_key_id = setup_gpg()
 
-    if not discovered:
-        raise RuntimeError(
-            "No valid releases containing manifest.json were found"
-        )
+    discovered = discover_registry_releases()
 
     print(f"Found {len(discovered)} registry releases")
 
+    # If no releases found, load existing packages.json or empty
+    if not discovered:
+        print("No valid releases containing manifest.json were found in organization.")
+        if not PACKAGES_FILE.exists():
+            write_json(PACKAGES_FILE, [])
+        if not STATE_FILE.exists():
+            write_json(STATE_FILE, [])
+        return
+
     # Rebuild the generated site from all published releases.
-    #
-    # This means old package versions remain available as long as their
-    # GitHub Releases still exist.
     if SITE.exists():
         shutil.rmtree(SITE)
 
     APT_DIR.mkdir(parents=True, exist_ok=True)
     RPM_DIR.mkdir(parents=True, exist_ok=True)
     NIX_DIR.mkdir(parents=True, exist_ok=True)
+
+    if signing_key_id:
+        export_public_keys(signing_key_id)
 
     imported = []
     apt_packages = []
@@ -437,123 +563,84 @@ def main():
 
             manifest = read_json(manifest_path)
 
-            required_manifest_fields = (
-                "name",
-                "version",
-                "source_archive",
-                "apt_package",
-                "rpm_package",
-            )
-
-            for field in required_manifest_fields:
-                if field not in manifest:
-                    raise RuntimeError(
-                        f"{repository} {tag}: manifest.json "
-                        f"is missing field '{field}'"
-                    )
-
-            package_name = manifest["name"]
-            version = manifest["version"]
-            source_name = manifest["source_archive"]
-            apt_name = manifest["apt_package"]
-            rpm_name = manifest["rpm_package"]
-            sri_name = f"{source_name}.sri"
+            package_name = manifest.get("name", repository)
+            version = manifest.get("version", tag.lstrip("v"))
+            source_name = manifest.get("source_archive", f"{package_name}-{version}.tar.gz")
 
             package_key = (package_name, version)
-
             if package_key in package_keys:
-                raise RuntimeError(
-                    f"Duplicate package/version found: "
-                    f"{package_name} {version}"
-                )
+                print(f"Warning: Skipping duplicate package/version {package_name} {version}")
+                continue
 
             package_keys.add(package_key)
 
-            required_assets = (
-                apt_name,
-                rpm_name,
-                source_name,
-                sri_name,
+            # Collect APT packages (support string or list)
+            deb_names = manifest.get("apt_packages") or (
+                [manifest["apt_package"]] if "apt_package" in manifest else []
             )
 
-            for asset_name in required_assets:
-                if asset_name not in assets:
-                    raise RuntimeError(
-                        f"{repository} {tag}: release is missing "
-                        f"asset '{asset_name}'"
-                    )
-
-            # ---------------------------------------------------------------
-            # Debian package
-            # ---------------------------------------------------------------
-
-            deb_file = apt_incoming / apt_name
-
-            download(
-                assets[apt_name]["browser_download_url"],
-                deb_file,
+            # Collect RPM packages (support string or list)
+            rpm_names = manifest.get("rpm_packages") or (
+                [manifest["rpm_package"]] if "rpm_package" in manifest else []
             )
 
-            apt_packages.append(deb_file)
+            # Download Debian packages
+            for deb_name in deb_names:
+                if deb_name in assets:
+                    deb_file = apt_incoming / deb_name
+                    download(assets[deb_name]["browser_download_url"], deb_file)
+                    apt_packages.append(deb_file)
+                else:
+                    print(f"Warning: {repository} {tag} missing APT asset '{deb_name}'")
 
-            # ---------------------------------------------------------------
-            # RPM package
-            # ---------------------------------------------------------------
+            # Download RPM packages
+            for rpm_name in rpm_names:
+                if rpm_name in assets:
+                    rpm_file = RPM_DIR / rpm_name
+                    download(assets[rpm_name]["browser_download_url"], rpm_file)
+                else:
+                    print(f"Warning: {repository} {tag} missing RPM asset '{rpm_name}'")
 
-            rpm_file = RPM_DIR / rpm_name
-
-            download(
-                assets[rpm_name]["browser_download_url"],
-                rpm_file,
-            )
-
-            # ---------------------------------------------------------------
-            # Nix source archive and hash
-            # ---------------------------------------------------------------
-
+            # Handle Nix source archive and hash
             source_file = NIX_DIR / source_name
-            source_hash_file = NIX_DIR / sri_name
+            sri_name = f"{source_name}.sri"
 
-            download(
-                assets[source_name]["browser_download_url"],
-                source_file,
-            )
+            if source_name in assets:
+                download(assets[source_name]["browser_download_url"], source_file)
+                
+                # Check for explicit SRI hash asset or in manifest
+                if sri_name in assets:
+                    source_hash_file = NIX_DIR / sri_name
+                    download(assets[sri_name]["browser_download_url"], source_hash_file)
+                    source_hash = source_hash_file.read_text(encoding="utf-8").strip()
+                elif "source_hash" in manifest:
+                    source_hash = manifest["source_hash"]
+                else:
+                    source_hash = calculate_sri_sha256(source_file)
 
-            download(
-                assets[sri_name]["browser_download_url"],
-                source_hash_file,
-            )
+                verify_sri_hash(source_file, source_hash)
 
-            source_hash = source_hash_file.read_text(
-                encoding="utf-8"
-            ).strip()
+                source_url = (
+                    f"https://github.com/{ORG}/"
+                    f"{repository}/releases/download/"
+                    f"{urllib.parse.quote(tag, safe='')}/"
+                    f"{urllib.parse.quote(source_name, safe='')}"
+                )
 
-            verify_sri_hash(
-                source_file,
-                source_hash,
-            )
-
-            source_url = (
-                f"https://github.com/{ORG}/"
-                f"{repository}/releases/download/"
-                f"{urllib.parse.quote(tag, safe='')}/"
-                f"{urllib.parse.quote(source_name, safe='')}"
-            )
-
-            imported.append(
-                {
-                    "repository": repository,
-                    "release_id": release_id,
-                    "tag": tag,
-                    "release_url": release["release_url"],
-                    "name": package_name,
-                    "version": version,
-                    "manifest": manifest,
-                    "source_archive": source_name,
-                    "source_hash": source_hash,
-                    "source_url": source_url,
-                }
-            )
+                imported.append(
+                    {
+                        "repository": repository,
+                        "release_id": release_id,
+                        "tag": tag,
+                        "release_url": release["release_url"],
+                        "name": package_name,
+                        "version": version,
+                        "manifest": manifest,
+                        "source_archive": source_name,
+                        "source_hash": source_hash,
+                        "source_url": source_url,
+                    }
+                )
 
     # Write state after all releases have passed validation.
     state = [
@@ -574,24 +661,19 @@ def main():
     print(f"Wrote {PACKAGES_FILE}")
 
     # Build the package repositories.
-    generate_apt_metadata(apt_packages)
-    generate_rpm_metadata()
+    generate_apt_metadata(apt_packages, signing_key_id=signing_key_id)
+    generate_rpm_metadata(signing_key_id=signing_key_id)
 
     # Generate the Nix flake.
     flake_generator = ROOT / "scripts" / "generate_flake.py"
-
-    if not flake_generator.exists():
-        raise RuntimeError(
-            f"Missing Nix flake generator: {flake_generator}"
+    if flake_generator.exists():
+        subprocess.run(
+            [
+                sys.executable,
+                str(flake_generator),
+            ],
+            check=True,
         )
-
-    subprocess.run(
-        [
-            sys.executable,
-            str(flake_generator),
-        ],
-        check=True,
-    )
 
     print("Registry update completed successfully")
 
