@@ -43,7 +43,7 @@ lines = [
     "",
     "      forAllSystems = function:",
     "        nixpkgs.lib.genAttrs systems (system:",
-    "          function system",
+    "          function system nixpkgs.legacyPackages.${system}",
     "        );",
     "",
     "    in {",
