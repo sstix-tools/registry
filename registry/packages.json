@@ -101,5 +101,47 @@
     "source_url": "https://github.com/sstix-tools/example-tool/releases/download/v1.0.5/example-tool-1.0.5.tar.gz",
     "tag": "v1.0.5",
     "version": "1.0.5"
+  },
+  {
+    "manifest": {
+      "apt_packages": [
+        "project_1.0.0_all.deb"
+      ],
+      "completions": [
+        "_project"
+      ],
+      "dependencies": [
+        "bash",
+        "coreutils",
+        "sed"
+      ],
+      "description": "Manage named project directories from the command line",
+      "executables": [
+        "project"
+      ],
+      "name": "project",
+      "nix_systems": [
+        "aarch64-darwin",
+        "x86_64-darwin",
+        "x86_64-linux",
+        "aarch64-linux"
+      ],
+      "rpm_packages": [
+        "project-1.0.0-1.noarch.rpm"
+      ],
+      "source_archive": "project-1.0.0.tar.gz",
+      "source_hash": "sha256-cbgz5SaPXOCdJvRJNxTYuDhwDlvZpEPfIEhVKtfjFzo=",
+      "type": "bash-utility",
+      "version": "1.0.0"
+    },
+    "name": "project",
+    "release_id": 427309277,
+    "release_url": "https://github.com/sstix-tools/project/releases/tag/v1.0.0",
+    "repository": "project",
+    "source_archive": "project-1.0.0.tar.gz",
+    "source_hash": "sha256-cbgz5SaPXOCdJvRJNxTYuDhwDlvZpEPfIEhVKtfjFzo=",
+    "source_url": "https://github.com/sstix-tools/project/releases/download/v1.0.0/project-1.0.0.tar.gz",
+    "tag": "v1.0.0",
+    "version": "1.0.0"
   }
 ]

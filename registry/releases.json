@@ -19,5 +19,12 @@
     "repository": "example-tool",
     "tag": "v1.0.5",
     "version": "1.0.5"
+  },
+  {
+    "name": "project",
+    "release_id": 427309277,
+    "repository": "project",
+    "tag": "v1.0.0",
+    "version": "1.0.0"
   }
 ]
