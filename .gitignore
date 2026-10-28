@@ -6,10 +6,6 @@ build/
 *.deb
 *.rpm
 
-# Generated Nix files
-flake.nix
-flake.lock
-
 # Python cache
 __pycache__/
 *.py[cod]

@@ -1,0 +1,48 @@
+{
+  "nodes": {
+    "example-tool": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793213033,
+        "narHash": "sha256-6jOSa/jCKk1K9jCX9waigwV8CygnkQWWKw3kjW1VhhA=",
+        "owner": "sstix-tools",
+        "repo": "example-tool",
+        "rev": "888355110f273fb68b6d7ceda300a779cf28484f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sstix-tools",
+        "repo": "example-tool",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1793136825,
+        "narHash": "sha256-2pkE69JpFRInaARSczZytcfPw83IL82E2KdhbWGwdMs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "f05535a0efcb2134c478d1e88434fadf486d42b5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "example-tool": "example-tool",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
