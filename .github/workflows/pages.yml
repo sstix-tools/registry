@@ -1,0 +1,77 @@
+name: Deploy package pages
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare website
+        run: |
+          mkdir -p site
+
+          if [ ! -d site/apt ]; then
+            mkdir -p site/apt
+          fi
+
+          if [ ! -d site/rpm ]; then
+            mkdir -p site/rpm
+          fi
+
+          if [ ! -d site/nix ]; then
+            mkdir -p site/nix
+          fi
+
+          cat > site/index.html <<'EOF'
+          <!doctype html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>my-tools package registry</title>
+          </head>
+          <body>
+            <h1>my-tools package registry</h1>
+            <ul>
+              <li><a href="apt/">APT repository</a></li>
+              <li><a href="rpm/">RPM repository</a></li>
+              <li><a href="nix/flake.nix">Nix flake</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
+          cp site/nix/flake.nix site/flake.nix 2>/dev/null || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
