@@ -442,7 +442,18 @@ def generate_apt_metadata(deb_files, signing_key_id=None):
     distributions_file = conf_directory / "distributions"
     conf_directory.mkdir(parents=True, exist_ok=True)
 
-    dist_content = APT_CONF_SOURCE.read_text(encoding="utf-8")
+    if APT_CONF_SOURCE.exists():
+        dist_content = APT_CONF_SOURCE.read_text(encoding="utf-8")
+    else:
+        dist_content = (
+            f"Origin: {ORG}\n"
+            f"Label: {ORG}\n"
+            "Suite: stable\n"
+            "Codename: stable\n"
+            "Architectures: amd64 arm64\n"
+            "Components: main\n"
+            f"Description: {ORG} Debian repository\n"
+        )
 
     if signing_key_id:
         dist_content = dist_content.strip() + f"\nSignWith: {signing_key_id}\n"
@@ -777,41 +788,41 @@ def main():
                     }
                 )
 
-    # Write state after all releases have passed validation.
-    state = [
-        {
-            "repository": item["repository"],
-            "release_id": item["release_id"],
-            "tag": item["tag"],
-            "name": item["name"],
-            "version": item["version"],
-        }
-        for item in imported
-    ]
+        # Write state after all releases have passed validation.
+        state = [
+            {
+                "repository": item["repository"],
+                "release_id": item["release_id"],
+                "tag": item["tag"],
+                "name": item["name"],
+                "version": item["version"],
+            }
+            for item in imported
+        ]
 
-    write_json(STATE_FILE, state)
-    write_json(PACKAGES_FILE, imported)
+        write_json(STATE_FILE, state)
+        write_json(PACKAGES_FILE, imported)
 
-    print(f"Wrote {STATE_FILE}")
-    print(f"Wrote {PACKAGES_FILE}")
+        print(f"Wrote {STATE_FILE}")
+        print(f"Wrote {PACKAGES_FILE}")
 
-    # Build the package repositories.
-    generate_apt_metadata(apt_packages, signing_key_id=signing_key_id)
-    generate_rpm_metadata(signing_key_id=signing_key_id)
+        # Build the package repositories while downloaded deb files are still available.
+        generate_apt_metadata(apt_packages, signing_key_id=signing_key_id)
+        generate_rpm_metadata(signing_key_id=signing_key_id)
 
-    # Generate the Nix flake.
-    flake_generator = ROOT / "scripts" / "generate_flake.py"
-    if flake_generator.exists():
-        subprocess.run(
-            [
-                sys.executable,
-                str(flake_generator),
-            ],
-            check=True,
-        )
+        # Generate the Nix flake.
+        flake_generator = ROOT / "scripts" / "generate_flake.py"
+        if flake_generator.exists():
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(flake_generator),
+                ],
+                check=True,
+            )
 
-    # Generate site index.html
-    generate_index_html(imported)
+        # Generate site index.html
+        generate_index_html(imported)
 
     print("Registry update completed successfully")
 
