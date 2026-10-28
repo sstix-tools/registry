@@ -133,18 +133,29 @@ nix profile install github:sstix-tools/registry#<package-name>
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     sstix-tools.url = "github:sstix-tools/registry";
+    sstix-tools.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, sstix-tools }:
     let
       system = "x86_64-linux"; # or "aarch64-darwin", "x86_64-darwin", "aarch64-linux"
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ sstix-tools.overlays.default ];
+      };
     in {
+      # Direct package access:
+      # sstix-tools.packages.${system}.<package-name>
+
+      # Or via overlay in nixpkgs:
+      # pkgs.<package-name>
+
       # In Home Manager:
-      # home.packages = [ sstix-tools.packages.${system}.<package-name> ];
+      # home.packages = [ pkgs.<package-name> ];
 
       # In NixOS:
-      # environment.systemPackages = [ sstix-tools.packages.${system}.<package-name> ];
+      # nixpkgs.overlays = [ sstix-tools.overlays.default ];
+      # environment.systemPackages = [ pkgs.<package-name> ];
     };
 }
 ```

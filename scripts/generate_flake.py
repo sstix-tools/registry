@@ -10,7 +10,8 @@ PACKAGES_FILE = ROOT / "registry" / "packages.json"
 
 ORG = os.getenv("TOOLS_ORG", "sstix-tools")
 
-# Flake output destinations for the distribution site
+# Flake output destinations
+ROOT_FLAKE_FILE = ROOT / "flake.nix"
 PAGES_DIR = ROOT / "site" / "nix"
 PAGES_FLAKE_FILE = PAGES_DIR / "flake.nix"
 SITE_FLAKE_FILE = ROOT / "site" / "flake.nix"
@@ -85,6 +86,8 @@ def main():
     lines.extend([
         "      });",
         "",
+        "      legacyPackages = forAllSystems (system: pkgs: self.packages.${system});",
+        "",
         "      apps = forAllSystems (system: pkgs: {",
     ])
 
@@ -92,11 +95,26 @@ def main():
         var_name = nix_ident(repo)
         pkg_name = data["name"]
         lines.append(
-            f'        "{pkg_name}" = inputs."{var_name}".apps.${{system}}.default or {{ type = "app"; program = "${{self.packages.${{system}}.\\"{pkg_name}\\"}}/bin/{pkg_name}"; }};'
+            f'        "{pkg_name}" = inputs."{var_name}".apps.${{system}}.default or {{ type = "app"; program = "${{self.packages.${{system}}."{pkg_name}"}}/bin/{pkg_name}"; }};'
         )
 
     lines.extend([
         "      });",
+        "",
+        "      overlays.default = final: prev: {",
+    ])
+
+    for repo, data in repos.items():
+        var_name = nix_ident(repo)
+        pkg_name = data["name"]
+        lines.append(
+            f'        "{pkg_name}" = inputs."{var_name}".packages.${{final.system}}.default or inputs."{var_name}".packages.${{final.system}}."{pkg_name}" or null;'
+        )
+
+    lines.extend([
+        "      };",
+        "",
+        "      overlay = self.overlays.default;",
         "    };",
         "}",
         "",
@@ -104,10 +122,12 @@ def main():
 
     flake_content = "\n".join(lines)
 
+    ROOT_FLAKE_FILE.write_text(flake_content, encoding="utf-8")
     PAGES_DIR.mkdir(parents=True, exist_ok=True)
     PAGES_FLAKE_FILE.write_text(flake_content, encoding="utf-8")
     SITE_FLAKE_FILE.write_text(flake_content, encoding="utf-8")
 
+    print(f"Wrote {ROOT_FLAKE_FILE}")
     print(f"Wrote {PAGES_FLAKE_FILE}")
     print(f"Wrote {SITE_FLAKE_FILE}")
 
