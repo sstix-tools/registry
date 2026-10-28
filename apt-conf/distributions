@@ -1,0 +1,7 @@
+Origin: sstix-tools
+Label: sstix-tools
+Suite: stable
+Codename: stable
+Architectures: amd64 arm64 all
+Components: main
+Description: sstix-tools Debian repository
