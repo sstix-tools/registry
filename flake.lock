@@ -63,11 +63,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793237208,
-        "narHash": "sha256-zGcR/bC0jKG877QBQDlDb+6iu/nT1ezKsgSxI3brzzk=",
+        "lastModified": 1793281414,
+        "narHash": "sha256-CKWFvnonWeqWv07Yu3ZX92sZZUWKOyE20RFhqjrgb5M=",
         "owner": "sstix-tools",
         "repo": "nixvm",
-        "rev": "1015ab7cba688a1d45e69f8b1c349d2057f3aeaa",
+        "rev": "2205218663e6bdf3d796983f15d004b7ffe2d7ac",
         "type": "github"
       },
       "original": {
