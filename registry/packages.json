@@ -146,6 +146,41 @@
   },
   {
     "manifest": {
+      "apt_packages": [],
+      "completions": [
+        "_nixvm"
+      ],
+      "dependencies": [
+        "nix",
+        "coreutils",
+        "jq"
+      ],
+      "description": "Nix-backed Java, Ruby, and Python version manager for macOS",
+      "executables": [
+        "nixvm"
+      ],
+      "name": "nixvm",
+      "nix_systems": [
+        "aarch64-darwin"
+      ],
+      "rpm_packages": [],
+      "source_archive": "nixvm-1.0.0.tar.gz",
+      "source_hash": "sha256-lrN7p5ZQRYAE406KxKpBd15NRrkVLafJVa1LTcNUvkI=",
+      "type": "bash-utility",
+      "version": "1.0.0"
+    },
+    "name": "nixvm",
+    "release_id": 427368068,
+    "release_url": "https://github.com/sstix-tools/nixvm/releases/tag/v1.0.0",
+    "repository": "nixvm",
+    "source_archive": "nixvm-1.0.0.tar.gz",
+    "source_hash": "sha256-lrN7p5ZQRYAE406KxKpBd15NRrkVLafJVa1LTcNUvkI=",
+    "source_url": "https://github.com/sstix-tools/nixvm/releases/download/v1.0.0/nixvm-1.0.0.tar.gz",
+    "tag": "v1.0.0",
+    "version": "1.0.0"
+  },
+  {
+    "manifest": {
       "apt_packages": [
         "project_1.0.0_all.deb"
       ],

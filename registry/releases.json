@@ -28,6 +28,13 @@
     "version": "1.0.0"
   },
   {
+    "name": "nixvm",
+    "release_id": 427368068,
+    "repository": "nixvm",
+    "tag": "v1.0.0",
+    "version": "1.0.0"
+  },
+  {
     "name": "project",
     "release_id": 427309277,
     "repository": "project",

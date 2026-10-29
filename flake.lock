@@ -56,6 +56,26 @@
         "type": "github"
       }
     },
+    "nixvm": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793237208,
+        "narHash": "sha256-zGcR/bC0jKG877QBQDlDb+6iu/nT1ezKsgSxI3brzzk=",
+        "owner": "sstix-tools",
+        "repo": "nixvm",
+        "rev": "1015ab7cba688a1d45e69f8b1c349d2057f3aeaa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sstix-tools",
+        "repo": "nixvm",
+        "type": "github"
+      }
+    },
     "project": {
       "inputs": {
         "nixpkgs": [
@@ -81,6 +101,7 @@
         "example-tool": "example-tool",
         "git-clone-remote": "git-clone-remote",
         "nixpkgs": "nixpkgs",
+        "nixvm": "nixvm",
         "project": "project"
       }
     }
