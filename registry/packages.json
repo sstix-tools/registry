@@ -105,6 +105,48 @@
   {
     "manifest": {
       "apt_packages": [
+        "git-clone-remote_1.0.0_all.deb"
+      ],
+      "completions": [
+        "_git-clone-remote"
+      ],
+      "dependencies": [
+        "bash",
+        "git",
+        "grep"
+      ],
+      "description": "Copy branches and tags to another Git remote",
+      "executables": [
+        "git-clone-remote"
+      ],
+      "name": "git-clone-remote",
+      "nix_systems": [
+        "aarch64-darwin",
+        "x86_64-darwin",
+        "x86_64-linux",
+        "aarch64-linux"
+      ],
+      "rpm_packages": [
+        "git-clone-remote-1.0.0-1.noarch.rpm"
+      ],
+      "source_archive": "git-clone-remote-1.0.0.tar.gz",
+      "source_hash": "sha256-v+vGQDobd+DlpDUAf/T33hFp/hOGYbOWGSZgKA6WMIk=",
+      "type": "bash-utility",
+      "version": "1.0.0"
+    },
+    "name": "git-clone-remote",
+    "release_id": 427340568,
+    "release_url": "https://github.com/sstix-tools/git-clone-remote/releases/tag/v1.0.0",
+    "repository": "git-clone-remote",
+    "source_archive": "git-clone-remote-1.0.0.tar.gz",
+    "source_hash": "sha256-v+vGQDobd+DlpDUAf/T33hFp/hOGYbOWGSZgKA6WMIk=",
+    "source_url": "https://github.com/sstix-tools/git-clone-remote/releases/download/v1.0.0/git-clone-remote-1.0.0.tar.gz",
+    "tag": "v1.0.0",
+    "version": "1.0.0"
+  },
+  {
+    "manifest": {
+      "apt_packages": [
         "project_1.0.0_all.deb"
       ],
       "completions": [
