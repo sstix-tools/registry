@@ -56,12 +56,21 @@ jobs:
             jq \
             gnupg
 
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
       - name: Run registry updater
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         run: |
           python3 scripts/update_registry.py
+
+      - name: Update Nix flake lock
+        run: nix flake update
 
       - name: Check for changes
         id: changes
