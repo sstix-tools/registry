@@ -20,6 +20,26 @@
         "type": "github"
       }
     },
+    "git-clone-remote": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793234297,
+        "narHash": "sha256-ppkieRbvKuxOMUbxe4Rg1EyqUr4xmbbflGbdCvbz8JQ=",
+        "owner": "sstix-tools",
+        "repo": "git-clone-remote",
+        "rev": "a9bae358c01df2ee39dfc6ded5bd8940b68643cc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sstix-tools",
+        "repo": "git-clone-remote",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1793195608,
@@ -59,6 +79,7 @@
     "root": {
       "inputs": {
         "example-tool": "example-tool",
+        "git-clone-remote": "git-clone-remote",
         "nixpkgs": "nixpkgs",
         "project": "project"
       }
